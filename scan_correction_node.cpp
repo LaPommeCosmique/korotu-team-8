@@ -29,7 +29,7 @@ static ros::Subscriber scanSub;
 static ros::Publisher correctedScanPub;
 
 // Current z-axis orientation (yaw) according to IMU data
-static float yaw = 0f;
+static float yaw = 0;
 
 /**
  * This function is known as a callback function. A program that subscribes to
@@ -49,13 +49,13 @@ static float yaw = 0f;
 void imuMessageCallback(const sensor_msgs::Imu::ConstPtr& imuMsg) {
 
 	// save all the data in the imu message to local variables
-	std_msgs::Header header = imuMsgs->header;
-	geometry_msgs::Quaternion orientation = imuMsgs->orientation;
-	boost::array<double, 9> orientation_covariance = imuMsgs->orientation_covariance;
-	geometry_msgs::Vector3 angular_velocity = imuMsgs->angular_velocity;
-	boost::array<double, 9> angular_velocity_covariance = imuMsgs->angular_velocity_covariance;
-	geometry_msgs::Vector3 linear_acceleration = imuMsgs->linear_acceleration;
-	boost::array<double, 9> linear_acceleration_covariance = imuMsgs->linear_acceleration_covariance;
+	std_msgs::Header header = imuMsg->header;
+	geometry_msgs::Quaternion orientation = imuMsg->orientation;
+	boost::array<double, 9> orientation_covariance = imuMsg->orientation_covariance;
+	geometry_msgs::Vector3 angular_velocity = imuMsg->angular_velocity;
+	boost::array<double, 9> angular_velocity_covariance = imuMsg->angular_velocity_covariance;
+	geometry_msgs::Vector3 linear_acceleration = imuMsg->linear_acceleration;
+	boost::array<double, 9> linear_acceleration_covariance = imuMsg->linear_acceleration_covariance;
 
 	// calculate z-axis rotation (yaw) from orientation (quaternion
 	double siny_cosp = 2 * (orientation.w * orientation.z + orientation.x * orientation.y);
