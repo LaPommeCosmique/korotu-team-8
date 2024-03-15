@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package interface;
+
+/**
+ * Waypoint used to route the drone and to report current position
+ */
+message Waypoint {
+    optional double position_long = 1;
+    optional double position_lat = 2;
+}
+
+/**
+ * Obstacle detection indication
+ */
+message Obstacle {
+    optional Waypoint location = 1;
+    optional double radius_m = 2;
+}
+
+/**
+ * General device status for both drone and sensor
+ */
+enum GeneralStatus {
+    STATUS_OK = 0;
+    STATUS_FAULT = 1;
+}
+
+/**
+ * Drone operational status
+ */
+enum DroneStatus {
+    DRONE_STATUS_GROUNDED = 0;
+    DRONE_STATUS_HOVERING = 1;
+    DRONE_STATUS_MOVING_TO_WAYPOINT = 2;
+}
+
+/**
+ * Message sent from sensor to drone
+ */
+message ToDrone {
+    optional GeneralStatus gen_status = 1;
+    optional Waypoint new_waypoint = 2;
+    optional Waypoint tare_position = 3;
+}
+
+/**
+ * Message sent from drone to sensor
+ */
+message ToSensor {
+
+    optional GeneralStatus gen_status = 1;
+    optional DroneStatus drone_status = 2;
+    optional Waypoint current_position = 3;
+    optional Waypoint next_position = 4;
+    optional Obstacle obstacle = 5;
+}
