@@ -204,7 +204,3 @@ include_directories(
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
 
-
-add_executable(rc_comms_node src/rc_comms_node.cpp)
-target_link_libraries(rc_comms_node ${catkin_LIBRARIES})
-
