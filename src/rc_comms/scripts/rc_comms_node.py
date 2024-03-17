@@ -9,6 +9,9 @@ import pigpio
 
 
 def recieve_rc():
+    
+    # Initialize rospy
+    rospy.init_node('rc_comms_node', anonymous=True)
 
     # Initialize pi
     pi = pigpio.pi()
@@ -35,36 +38,36 @@ def recieve_rc():
     trigger_thresholds = [100] * 8
 
     # Publisher callback factories
-    def get_roll_pub_callback:
+    def get_roll_pub_callback():
         pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
-        return lambda pwm_micros : pub.publish('yaw recieved: ' + str(pwm_micros / 1000))
-    def get_pitch_pub_callback:
+        return lambda pwm_micros : pub.publish('rolle recieved: ' + str(pwm_micros / 1000))
+    def get_pitch_pub_callback():
         pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
         return lambda pwm_micros : pub.publish('pitch recieved: ' + str(pwm_micros / 1000))
-    def get_throttle_pub_callback:
+    def get_throttle_pub_callback():
         pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
         return lambda pwm_micros : pub.publish('throttle recieved: ' + str(pwm_micros / 1000))
-    def get_yaw_pub_callback:
+    def get_yaw_pub_callback():
         pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
         return lambda pwm_micros : pub.publish('yaw recieved: ' + str(pwm_micros / 1000))
-    def get_swa_pub_callback:
+    def get_swa_pub_callback():
         pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
         return lambda pwm_micros : pub.publish('swa recieved: ' + str(pwm_micros / 1000))
-    def get_swb_pub_callback:
+    def get_swb_pub_callback():
         pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
         return lambda pwm_micros : pub.publish('swb recieved: ' + str(pwm_micros / 1000))
-    def get_swc_pub_callback:
+    def get_swc_pub_callback():
         pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
         return lambda pwm_micros : pub.publish('swc recieved: ' + str(pwm_micros / 1000))
-    def get_swd_pub_callback:
+    def get_swd_pub_callback():
         pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
         return lambda pwm_micros : pub.publish('swd recieved: ' + str(pwm_micros / 1000))
 
     # Publisher callback functions
     publisher_callbacks = [get_roll_pub_callback(), get_pitch_pub_callback(),
                             get_throttle_pub_callback(), get_yaw_pub_callback(),
-                            get_swa_pub_callback(), get_swb_pub_callback(),
-                            get_swc_pub_callback(), get_swd_pub_callback()]
+                            get_swc_pub_callback(), get_swd_pub_callback(),
+                            get_swa_pub_callback(), get_swb_pub_callback()]
 
 
     # Callback function for rc signal edge change
@@ -103,7 +106,9 @@ def recieve_rc():
     on_edge_fall_callback = pi.callback(rc_signal, pigpio.FALLING_EDGE, on_edge_fall)
     rospy.loginfo("Listening to RC signals")
 
-    time.sleep(60)
+    # spin() simply keeps python from exiting until this node is stopped
+    rospy.spin()
+    # time.sleep(60)
 
     on_edge_fall_callback.cancel()
 
