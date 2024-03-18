@@ -23,11 +23,12 @@ def cbf(gpio, level, tick):
          channel = 0
       else:
          if start_of_frame:
-            if channel < len(OUT_GPIO):
+            if channel < 8:
                channel_values[channel] = diff
-            else if channel == 8:
-               print(channel_values)
+            
             channel += 1
+            if channel == 8:
+               print(channel_values)
    last_tick = tick
    
 pi = pigpio.pi()
