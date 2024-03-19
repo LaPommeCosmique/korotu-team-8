@@ -153,6 +153,7 @@ int main(int argc, char** argv) {
 	// Create a new publisher to publish to the "corrected_scan" topic
 	correctedScanPub = n.advertise<sensor_msgs::LaserScan>("corrected_scan", 1000);
 
+	ROS_INFO("Scan Correction Online");
 
 	// This code enters a loop, continually processing messages that arrive
 	// in the queue. If you don't have this code, messages that are waiting in
