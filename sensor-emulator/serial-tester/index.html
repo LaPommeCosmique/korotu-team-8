@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+    <title>Raspberry PI (via serial)</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+    <script src="Channel.js"></script>
+    <script src="serialCommunicationManager.js"></script>
+</head>
+<body>
+    <div id="page" data-connection-state="not-connected"> <!--data-connection-status can be connected, connecting, or not-connected-->
+        <div id="header">Raspberry PI Simulator (via serial)</div>
+        <div id="body">
+            <div id="left-panel">
+                <div id="event-log"></div>
+                <div id="input-display">
+                    <div id="input-box" contenteditable="true"></div>
+                    <div id="send-button" class="button no-select">Send</div>
+                </div>
+            </div>
+            <div id="right-panel">
+                <div id="connection-display">
+                    <div id="connection-status"></div> 
+                    <div id="connection-button" class="button no-select"></div>
+                </div>
+                <div id="protocol-display"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,173 @@
+div {
+    display: block;
+    min-height: 20px;
+}
+/* page settings */
+#page {
+    position: fixed;
+    padding: 0px;
+    margin: 0px;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+#page > div {
+    padding: 20px;
+}
+
+#header {
+    font-weight: bold;
+    font-size: 24px;
+    margin-left: 24px;
+}
+
+#body {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+}
+#body > div {
+    padding: 20px;
+}
+
+
+
+/* buttons */
+.button {
+    margin: 8px;
+    padding: 8px;
+    width: 124px;
+    text-align: center;
+    border: 3px solid black;
+    border-radius: 8px;
+    border-width: 3px;
+    border-style: solid;
+}
+
+
+/* left panel */
+#left-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 500px;
+    flex-grow: 1;
+}
+
+#input-display {
+    display: flex;
+}
+#event-log {
+    flex-grow: 1;
+    padding: 8px;
+    margin: 8px;
+    background-color: #EEEEEE;
+    color: #333333;
+}
+#input-display > #input-box {
+    flex-grow: 1;
+    padding: 8px;
+    margin: 8px;
+    border: 3px solid lightgray;
+    border-radius: 8px;
+}
+#input-display > #input-box:active {
+    border-color: black;
+}
+#page[data-connection-state="not-connected"] #input-display > #input-box,
+#page[data-connection-state="connecting"] #input-display > #input-box {
+    border-color: #EEEEEE;
+    background-color: #EEEEEE;
+
+    -webkit-user-modify: read-only;
+}
+#page[data-connection-state="not-connected"] #input-display > #send-button,
+#page[data-connection-state="connecting"] #input-display > #send-button {
+    background-color: #EEEEEE;
+    color: #AAAAAA;
+    border-color: #EEEEEE;
+    cursor: default;
+}
+#page[data-connection-state="connected"] #input-display > #send-button {
+    background-color: #4285F4;
+    color: white;
+    border-color: black;
+    cursor: default;
+}
+#page[data-connection-state="connected"] #input-display > #send-button:active {
+    background-color: #3A75D6;
+}
+
+
+
+
+/* right panel */
+#connection-display > #connection-state {
+    margin: 8px;
+    padding: 8px;
+    width: 250px;
+}
+#page[data-connection-state="not-connected"] #connection-display > #connection-state:after {
+    content: "No device connected";
+}
+#page[data-connection-state="not-connected"] #connection-display > #connection-button:after {
+    content: "Connect";
+}
+#page[data-connection-state="not-connected"] #connection-display > #connection-button {
+    background-color: #4285F4;
+    color: white;
+}
+
+#page[data-connection-state="connecting"] #connection-display > #connection-state:after {
+    content: "Connecting to device...";
+}
+#page[data-connection-state="connecting"] #connection-display > #connection-button:after {
+    content: "...";
+}
+#page[data-connection-state="connecting"] #connection-display > #connection-button {
+    background-color: lightgray;
+    color: black;
+    border-color: lightgray;
+}
+
+#page[data-connection-state="connected"] #connection-display > #connection-state:after {
+    content: "Connected to device";
+}
+#page[data-connection-state="connected"] #connection-display > #connection-button:after {
+    content: "Disconnect";
+}
+#page[data-connection-state="connected"] #connection-display > #connection-button {
+    background-color: #555555;
+    color: #EEEEEE;
+}
+#page[data-connection-state="connected"] #connection-display > #connection-button:active {
+    background-color: #444444;
+    color: #EEEEEE;
+}
+
+#connection-display {
+    display: flex;
+}
+
+
+
+
+
+
+
+
+
+/* general */
+.no-select {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Old versions of Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+  }
