@@ -25,10 +25,6 @@ def obstacle_detection_callback(data):
     resolution = data.info.resolution  # size of map squares in meters
     origin = data.info.origin.position  # The origin of the map [m, m, rad]
     
-
-    
-
-
     # Preparing data for clustering
     obstacle_points = []
     for y in range(height):
@@ -38,6 +34,26 @@ def obstacle_detection_callback(data):
                 real_y = origin.y + (y + 0.5) * resolution
                 obstacle_points.append([real_x, real_y])
     
+    # Clustering obstacle points
+    clustering = DBSCAN(eps=resolution*1.5, min_samples=3).fit(obstacle_points)
+    labels = clustering.labels_
+
+    # Grouping points by clusters to find centroids and radii
+    clusters = {}
+    for label, point in zip(labels, obstacle_points):
+        if label == -1:  # Ignoring noise points
+            continue
+        if label not in clusters:
+            clusters[label] = []
+        clusters[label].append(point)
+    
+    # Calculating centroids and radii
+    for label, points in clusters.items():
+        points = np.array(points)
+        centroid = points.mean(axis=0)
+        radius = np.max(np.sqrt(np.sum((points - centroid)**2, axis=1)))
+        
+        print(f"Obstacle {label}: Centroid = {centroid}, Radius = {radius} meters")
     
     # Here you can do something with the obstacles, e.g., visualize them or plan a path
 
@@ -163,7 +179,5 @@ if __name__ == '__main__':
     #            obstacles.append((real_x, real_y))
     #            print("Obstacle at ({}, {})".format(real_x, real_y))
 #End of Algo 8
-
-
 
  
