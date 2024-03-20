@@ -15,7 +15,7 @@ long previousMillis = 0;
 
 
 void setup() {
-  Serial.begin(9600);    // initialize serial communication
+  Serial.begin(115200);    // initialize serial communication
   while (!Serial);       //starts the program if we open the serial monitor.
 
   pinMode(LED_BUILTIN, OUTPUT); // initialize the built-in LED pin to indicate when a central is connected
