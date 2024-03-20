@@ -5,21 +5,39 @@
 
 # Note
 
-This repository uses the Tl31-prod repository as a submodule drone-sensor communication. To clone the project with submodules, run the following command.
+This repository uses the following as submodules:
+- the Tl31-prod repository for drone-sensor communication
+- robopeak/rplidar_ros for scanning
+- hector_slam for mapping
+
+To clone the project with submodules, run the following command.
 
 ```
-git clone --recurse-submodules git@github.com:LaPommeCosmique/korotu-team-8.git 
+git clone --recursive git@github.com:LaPommeCosmique/korotu-team-8.git 
 ```
 
-If you have already cloned the project, you can run 
+If you have already cloned the project, or you want to make sure your submodules are up to date, you can run the following command.
 
 ```
-git submodule init
-git submodule update
+git submodule update --init --recursive
 ```
 
-If there have been changes made to the TL31-prod repository that needs to be updated on this repository, the following command can be run.
+If you only want to update one submodule (i.e. the TL31 team updates the drone-sensor protocol), the following command can be run.
 
 ```
-git submodule update --remote
+git submodule update <specific path to submodule>
 ```
+
+Submodules were added with the following command.
+
+```
+git submodule add <submodule link> <path>
+
+e.g.
+git submodule add git submodule add git@github.com:robopeak/rplidar_ros.git src/rplidar_ros
+```
+
+
+
+
+
