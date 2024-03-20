@@ -37,7 +37,4 @@ e.g.
 git submodule add git submodule add git@github.com:robopeak/rplidar_ros.git src/rplidar_ros
 ```
 
-
-
-
-
+**IMPORTANT NOTE: WE ARE CURRENTLY WAITING FOR Tl31-prod TO MERGE emern/drone_interface WITH THE MAIN BRANCH. WHEN THAT IS COMPLETE, DELETE THE PROTOCOL/ FOLDER AND UPDATE REFERENCES TO USE THE PROTOCOL/ FOLDER IN Tl31-prod**
