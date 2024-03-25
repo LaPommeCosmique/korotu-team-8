@@ -6,6 +6,7 @@ from std_msgs.msg import Float32
 from std_msgs.msg import UInt8
 
 from mavros_msgs.srv import CommandBool
+from mavros_msgs.srv import SetMode
 from geometry_msgs.msg import TwistStamped
 
 ###### NOTE: MAKE SURE YOU MAKE PYTHON FILE EXECUTABLE ------------------------------------------------------
@@ -21,9 +22,13 @@ def manage_mavros():
     rospy.init_node('mavros_manager_node', anonymous=True)
     print("Starting mavros manager")
 
-    # wait for service to become active
+    # wait for services to become active
     rospy.wait_for_service('/mavros/cmd/arming')
+    rospy.wait_for_service('/mavros/set_mode')
+
     arming_service = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
+    set_mode_service = rospy.ServiceProxy('/mavros/set_mode', SetMode)
+
     print("Mavros has come online")
 
     # Publishers
@@ -54,6 +59,7 @@ def manage_mavros():
         if resp.success:
             armed = True
             send_flight_parameters()
+            send_flight_mode()
             print("Drone armed successfully!")
         else:
             print("Failed to arm the drone.")
@@ -68,6 +74,7 @@ def manage_mavros():
             print("Failed to disarm the drone.")
     
     def check_for_arming():
+        nonlocal arm_trigger_time
         if (armed is False):
             if (throttle < arm_trigger_threshold and yaw > (1 - arm_trigger_threshold)):
                 if (arm_trigger_time is None):
@@ -81,6 +88,7 @@ def manage_mavros():
             arm_trigger_time = None
 
     def check_for_disarming():
+        nonlocal disarm_trigger_time
         if (armed is True):
             if (throttle < arm_trigger_threshold and yaw < arm_trigger_threshold):
                 if (disarm_trigger_time is None):
@@ -97,7 +105,10 @@ def manage_mavros():
     def send_flight_parameters():
         forward_velocity = (pitch * 2 - 1) * max_horizontal_velocity
         side_velocity = (roll * 2 - 1) * max_horizontal_velocity
-        vertical_velocity = (throttle * 2 - 1) * max_vertical_velocity
+        if (throttle_hold is False):
+            vertical_velocity = (throttle * 2 - 1) * max_vertical_velocity
+        else:
+            vertical_velocity = 0
         spin = (yaw * 2 - 1) * max_angular_velocity
             
         msg = TwistStamped()
@@ -115,6 +126,26 @@ def manage_mavros():
         msg.twist.angular.z = spin  # Angular velocity about z-axis
 
         vel_pub.publish(msg)
+
+    def send_flight_mode():
+        if (rtl is True):
+            mode = "RTL"
+            resp = set_mode_service(11, "RTL")
+        elif (flight_mode is "ALT_HOLD"):
+            mode = "ALT_HOLD"
+            resp = set_mode_service(2, "ALT_HOLD")
+        elif (flight_mode is "LOITER"):
+            mode = "LOITER"
+            resp = set_mode_service(5, "LOITER")
+        else:
+            mode = "STABILIZE"
+            resp = set_mode_service(0, "STABILIZE")
+
+        if resp.success:
+            print("Drone mode set successfully: " + mode)
+        else:
+            print("Drone mode NOT set successfully: " + mode)
+
 
     # rc channel callbacks
     def rc_roll_callback(value):
@@ -152,19 +183,19 @@ def manage_mavros():
         nonlocal rtl
         rtl = True if value is 1 else False
         if (armed):
-            send_flight_parameters()
+            send_flight_mode()
 
     def rc_switch_b_callback(value):
         nonlocal throttle_hold
         throttle_hold = True if value is 1 else False
         if (armed):
-            send_flight_parameters()
+            send_flight_mode()
 
     def rc_switch_c_callback(value):
         nonlocal flight_mode
         flight_mode = "LOITER" if value is 2 else ("ALT_HOLD" if value is 1 else "STABILIZE")
         if (armed):
-            send_flight_parameters()
+            send_flight_mode()
 
     def rc_switch_d_callback(value):
         pass
