@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 import rospy
-from std_msgs.msg import String
 import time
 import pigpio
+from std_msgs.msg import Float32
+from std_msgs.msg import UInt8
 
 ###### NOTE: MAKE SURE YOU MAKE PYTHON FILE EXECUTABLE ------------------------------------------------------
 ###### chmod +x rc_comms_node.py ----------------------------------------------------------------------------
 
 
-def recieve_rc():
+def receive_rc():
     
     # Initialize rospy
     rospy.init_node('rc_comms_node', anonymous=True)
@@ -39,29 +40,29 @@ def recieve_rc():
 
     # Publisher callback factories
     def get_roll_pub_callback():
-        pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
-        return lambda pwm_micros : pub.publish('rolle recieved: ' + str(pwm_micros / 1000))
+        pub = rospy.Publisher('comms/rc/roll', Float32, queue_size=10)
+        return lambda pwm_micros : pub.publish((pwm_micros - 1000) / 1000)
     def get_pitch_pub_callback():
-        pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
-        return lambda pwm_micros : pub.publish('pitch recieved: ' + str(pwm_micros / 1000))
+        pub = rospy.Publisher('comms/rc/pitch', Float32, queue_size=10)
+        return lambda pwm_micros : pub.publish((pwm_micros - 1000) / 1000)
     def get_throttle_pub_callback():
-        pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
-        return lambda pwm_micros : pub.publish('throttle recieved: ' + str(pwm_micros / 1000))
+        pub = rospy.Publisher('comms/rc/throttle', Float32, queue_size=10)
+        return lambda pwm_micros : pub.publish((pwm_micros - 1000) / 1000)
     def get_yaw_pub_callback():
-        pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
-        return lambda pwm_micros : pub.publish('yaw recieved: ' + str(pwm_micros / 1000))
-    def get_swa_pub_callback():
-        pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
-        return lambda pwm_micros : pub.publish('swa recieved: ' + str(pwm_micros / 1000))
-    def get_swb_pub_callback():
-        pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
-        return lambda pwm_micros : pub.publish('swb recieved: ' + str(pwm_micros / 1000))
-    def get_swc_pub_callback():
-        pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
-        return lambda pwm_micros : pub.publish('swc recieved: ' + str(pwm_micros / 1000))
-    def get_swd_pub_callback():
-        pub = rospy.Publisher('rc_comms_message', String, queue_size=10)
-        return lambda pwm_micros : pub.publish('swd recieved: ' + str(pwm_micros / 1000))
+        pub = rospy.Publisher('comms/rc/yaw', Float32, queue_size=10)
+        return lambda pwm_micros : pub.publish((pwm_micros - 1000) / 1000)
+    def get_swa_pub_callback(): # two states - 0, 1
+        pub = rospy.Publisher('comms/rc/switch_a', UInt8, queue_size=10)
+        return lambda pwm_micros : pub.publish(round((pwm_micros - 1000) / 1000))
+    def get_swb_pub_callback(): # two states - 0, 1
+        pub = rospy.Publisher('comms/rc/switch_b', UInt8, queue_size=10)
+        return lambda pwm_micros : pub.publish(round((pwm_micros - 1000) / 1000))
+    def get_swc_pub_callback(): # three states - 0, 1, 2
+        pub = rospy.Publisher('comms/rc/switch_c', UInt8, queue_size=10)
+        return lambda pwm_micros : pub.publish(round((pwm_micros - 1000) / 500))
+    def get_swd_pub_callback(): # two states - 0, 1
+        pub = rospy.Publisher('comms/rc/switch_d', UInt8, queue_size=10)
+        return lambda pwm_micros : pub.publish(round((pwm_micros - 1000) / 1000))
 
     # Publisher callback functions
     publisher_callbacks = [get_roll_pub_callback(), get_pitch_pub_callback(),
@@ -117,6 +118,6 @@ def recieve_rc():
 
 if __name__ == '__main__':
     try:
-        recieve_rc()
+        receive_rc()
     except rospy.ROSInterruptException:
         pass
