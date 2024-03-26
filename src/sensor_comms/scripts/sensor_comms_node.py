@@ -8,6 +8,11 @@ import pigpio
 
 from ....protocol.drone_side import Drone
 
+from std_msgs.msg import Float32
+from std_msgs.msg import UInt8
+from std_msgs.msg import Header
+
+from geometry_msgs.msg import PointStamped, Point32
 
 """
 device
@@ -50,84 +55,94 @@ drone
 """
 
 
-
-
-
-
-
-
-
-
-
-current_waypoint = [None, None]
-current_status = "OFF" # can be OFF, ON_ACTIVE, ON_INACTIVE, ON_FAULT
-
-last_pos = [None, None]
-last_vel = [None, None]
-last_pos_time = None
-
-
-
-last_gen_status_sent = None
-last_drone_status_sent = None
-
-
 device_name = '/dev/ttyACM0'
-
-# create callback function for sending data through serial
-def create_send_cb(ser):
-    return lambda data : ser.write(data)
-
-# create callback for extracting data from serial
-def create_rec_cb(ser):
-    return lambda _ : ser.read(ser.in_waiting)
-
-# create callback for getting current drone position
-def create_get_pos_cb():
-    pass
-
-
-def send_keep_alives(drone, rate):
-    while current_status == "ON_ACTIVE" or current_status == "ON_INACTIVE":
-        drone.send_drone_status()
-        rate.sleep()
 
 def manage_comms():
 
+    # Initialize rospy
+    rospy.init_node('rc_comms_node', anonymous=True)
+
+    # Initialize serial
     ser = serial.Serial(device_name, 115200, timeout=1)
     ser.reset_input_buffer()
     
     # IO callback functions
-    send_cb = create_send_cb(ser)
-    rec_cb = create_rec_cb(ser)
-    get_pos_cb = create_get_pos_cb()
+    send_cb = lambda data : ser.write(data)
+    rec_cb = lambda _ : ser.read(ser.in_waiting)
 
-    drone = Drone(send_cb, rec_cb, get_pos_cb, all_msgs_cb)
+    # Comms status flag and publisher
+    comms_status = "OFF" # can be OFF, ON_ACTIVE, ON_INACTIVE, ON_FAULT
+    comms_status_pub = rospy.Publisher('comms/sensor/status', String, queue_size=10)
+
+    # Update comms status
+    def set_comms_status(status):
+        nonlocal comms_status
+        if (status == "OFF" or status == "ON_ACTIVE" or status == "ON_INACTIVE" or status == "ON_FAULT"):
+            comms_status = status
+            comms_status_pub.publish(comms_status)
     
-    # Initialize rospy
-    rospy.init_node('rc_comms_node', anonymous=True)
+    # Variables to determine precise location (long, lat)
+    last_pos = None
+    last_vel = None
+    last_pos_update_time = None # nanoseconds since epoch
 
-    # If status is ON_ACTIVE or ON_INACTIVE, we should send keep_alive twice a second
-    rate = rospy.Rate(2)  # 2hz
+    # Get current drone position
+    def get_current_pos():
 
-    # Create publishers
-    general_status_pub = rospy.Publisher('comms/general_status', String, queue_size=10)
-    drone_status_pub = rospy.Publisher('comms/drone_status', String, queue_size=10)
-    waypoint_pub = rospy.Publisher('comms/waypoint', String, queue_size=10)
+        if (last_pos is None):
+            return [None, None]
+        if (last_vel is None or last_pos_update_time is None):
+            return [last_pos[0], last_pos[1]]
+        
+        delta_time = 1.0 * (time.time_ns() - last_pos_update_time) / 10**9 # delta time in seconds
 
-    # Create subscribers
-    obstacle
-    pose_sub = message_filters.Subscriber('/slam_out_pose', PoseStamped) 
-
-
-
-
+        current_pos = [last_pos[0] + last_vel[0] * delta_time, last_pos[1] + last_vel[1] * delta_time]
+        return current_pos
     
-
-    # states OFF, ON_FAULT, ON_ACTIVE, ON_INACTIVE
-
-    # listen to arming
+    # Current waypoints (long, lat)
+    current_waypoint = None
     
+    # listen to sensor for waypoints. if received:
+        # if ON_ACTIVE or ON_INACTIVE
+            # publish to WAYPOINT
+            # set to ON_ACTIVE
+
+    # Waypoint publisher
+    waypoint_pub = rospy.Publisher('/destination', PointStamped, queue_size=10)
+
+    # Callback function for waypoints received from sensor
+    def on_waypoint_recieve(message):
+        long = message.new_waypoint.position_long
+        lat = message.new_waypoint.position_lat
+
+        if (comms_status == "ON_ACTIVE" or comms_status == "ON_INACTIVE"):
+            if (long is not None and lat is not None):
+                if (comms_status == "ON_INACTIVE"):
+                    set_comms_status("ON_ACTIVE")
+                
+                current_waypoint = [long, lat]
+
+                waypoint_msg = PointStamped()
+                waypoint_msg.header = Header(stamp=rospy.Time.now(), frame_id="base_link")
+        
+                waypoint_msg.point.x = long
+                waypoint_msg.point.y = lat
+                waypoint_msg.point.z = 0
+
+                waypoint_pub.publish(waypoint_msg)
+            else:
+                if (comms_status == "ON_ACTIVE"):
+                    set_comms_status("ON_INACTIVE")
+                current_waypoint = None
+                # todo clear waypoint
+                pass
+    
+    # TODO todo send taring messages
+    # TODO todo listen for waypoint arrival
+
+    # listen to arming TODO todo
+    # listen to drone elevation (?) TODO todo
+
 
     # subscribe to swd
         # on - initiate connect
@@ -135,7 +150,7 @@ def manage_comms():
                 # if grounded
                     # set to ON_FAULT
                 # else
-                    # clear waypoint
+                    # clear waypoint (or not)
                     # set to ON_INACTIVE
                     # start keep alives
         # off 
@@ -150,7 +165,32 @@ def manage_comms():
                 # set OFF
             # if OFF
                 # do nothing
-        
+    
+
+    def on_switch_d_input(switch_value):
+        # if switch is turned on, attempt to turn on autonomous mode
+        if (switch_value.data == 1 and comms_status == "OFF"):
+            if (True): # todo check if drone is not grounded
+                # todo clear waypoint (or maybe not)
+                success = drone.connect(1) # 1 second time out
+                if (success == True):
+                    current_waypoint = None
+                    set_comms_status("ON_INACTIVE")
+                else:
+                    current_waypoint = None
+                    set_comms_status("ON_FAULT")
+                    drone.send_connection_termination()
+        # if switch is turned off, turn off autonomous mode
+        elif (switch_value.data == 0 and comms_comms != "OFF"):
+            if (comms_status == "ON_ACTIVE"):
+                # todo clear waypoint
+                pass
+            if (comms_status == "ON_ACTIVE" or comms_status == "ON_INACTIVE"):
+                drone.send_connection_termination()
+            
+            current_waypoint = None
+            set_comms_status("OFF")
+
     # subscribe to gen_status
         # if OK
             # if ON_ACTIVE, ON_INACTIVE
@@ -172,18 +212,7 @@ def manage_comms():
             # if OFF
                 # do nothing
 
-    # subscribe to new waypoint
-        # if ON_ACTIVE or ON_INACTIVE
-            # publish to WAYPOINT
-            # set to ON_ACTIVE
-    
-    # loop 0.5 sec
-        # if ON_ACTIVE 
-            # send MOVING_TO_WAYPOINT
-        # if ON_INACTIVE
-            # send HOVERING
-        # if ON_FAULT, OFF
-            # dont do anything
+
 
     # subscribe to current drone position
         # if ON_ACTIVE
@@ -196,22 +225,108 @@ def manage_comms():
         # if ON_ACTIVE
             # stop drone
             # send OBSTACLE
+            # set ON_INACTIVE
         # if ON_INACTIVE
             # send OBSTACLE
         # if ON_FAULT, OFF
             # do nothing
     
+    
+    # callback function for when obstacle is detected
+    def on_obstacle(obstacle_msg):
+
+        # if drone is following a waypoint, stop drone (out of scope?)
+        if(comms_status == "ON_ACTIVE"):
+            # todo stop drone
+            current_waypoint = None
+            set_comms_status("ON_INACTIVE")
+            pass
+        
+        # check if we are in an active connection with drone
+        if (comms_status == "ON_ACTIVE" or comms_status == "ON_INACTIVE"):
+            long = obstacle_msg.x
+            lat = obstacle_msg.y
+            radius = obstacle_msg.z
+
+            drone.send_obstacle(long, lat, radius)
+
+    obstacle_sub = rospy.Subscriber('/obstacle', Point32, on_obstacle)
+
     # subscribe to user inputs
         # if ON_ACTIVE, ON_INACTIVE
             # if yaw, pitch, roll, thrust
                 # stop drone
                 # send FAULT
                 # set ON_FAULT
-    
+
+    # callback function for when stick input is detected from user
+    def on_stick_input(input):
+        
+        # if drone is following a waypoint, clear waypoint (out of scope?)
+        if(comms_status == "ON_ACTIVE"):
+            # todo clear waypoint
+            pass
+
+        # if we are currently in ON_ACTIVE or ON_INACTIVE state, we stop autonomous operation by setting to ON_FAULT
+        if (comms_status == "ON_ACTIVE" or comms_status == "ON_INACTIVE"):
+            current_waypoint = None
+            set_comms_status("ON_FAULT")
+            drone.send_connection_termination()
+
+    rospy.Subscriber('/rc/comms/yaw', Float32, on_stick_input)
+    rospy.Subscriber('/rc/comms/throttle', Float32, on_stick_input)
+    rospy.Subscriber('/rc/comms/pitch', Float32, on_stick_input)
+    rospy.Subscriber('/rc/comms/roll', Float32, on_stick_input)
+
+    # todo determine behaviour of switch inputs
 
 
+    # loop 0.5 sec
+        # if ON_ACTIVE 
+            # send MOVING_TO_WAYPOINT
+        # if ON_INACTIVE
+            # send HOVERING
+        # if ON_FAULT, OFF
+            # dont do anything
 
+    rate = rospy.Rate(2)  # 2 hz
 
+    # If status is ON_ACTIVE or ON_INACTIVE, we should send keep_alive twice a second
+    while not rospy.is_shutdown():
+        drone.service_messages()
+
+        # check if we are connected
+        if (comms_status == "ON_ACTIVE" or comms == "ON_INACTIVE"):
+            if (drone.is_connected()):
+                # we are connected and communicating
+
+                # determine drone status
+                if (comms_status == "ON_ACTIVE"):
+                    drone_status = DroneStatus.DRONE_STATUS_MOVING_TO_WAYPOINT
+                if (comms_status == "ON_INACTIVE"):
+                    drone_status = DroneStatus.DRONE_STATUS_HOVERING
+                
+                # determine current coordinates
+                current_long, current_lat = get_current_pos()
+
+                # determine next coordinates
+                next_long = waypoint[0] if waypoint is not None else None
+                next_lat = waypoint[1] if waypoint is not None else None
+
+                # send status update to drone
+                drone.send_drone_status(drone_status, current_long, current_lat, next_long, next_lat)                
+            else:
+                # sensor has disconnected, we are no longer communicating
+                current_waypoint = None
+                set_comms_status("ON_FAULT")
+                drone.send_connection_termination()
+        elif (comms.status == "ON_FAULT"):
+            if (drone.is_connected()):
+                # drone is attempting to connect even though we are faulted. termination connection
+                drone.send_connection_termination()
+
+        # sleep for 0.5s (2 hz)
+        rate.sleep()
 
 
 
