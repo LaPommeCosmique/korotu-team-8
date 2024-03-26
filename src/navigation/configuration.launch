@@ -1,0 +1,6 @@
+<launch>
+
+	<include file = "$(find rplidar_ros)/rplidar.launch"/>
+	<include file="$(find mavros)/launch/apm.launch"/>
+	<include file="$(find hector_slam)/launch/tutorial.launch"/>
+</launch> 
