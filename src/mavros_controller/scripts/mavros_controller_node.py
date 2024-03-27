@@ -150,19 +150,19 @@ def manage_mavros():
     # rc channel callbacks
     def rc_roll_callback(value):
         nonlocal roll
-        roll = value
+        roll = value.data
         if (armed):
             send_flight_parameters()
 
     def rc_pitch_callback(value):
         nonlocal pitch
-        pitch = value
+        pitch = value.data
         if (armed):
             send_flight_parameters()
 
     def rc_throttle_callback(value):
         nonlocal throttle
-        throttle = value
+        throttle = value.data
         if (armed):
             send_flight_parameters()
             check_for_disarming()
@@ -171,7 +171,7 @@ def manage_mavros():
 
     def rc_yaw_callback(value):
         nonlocal yaw
-        yaw = value
+        yaw = value.data
         if (armed):
             send_flight_parameters()
             check_for_disarming()
@@ -181,19 +181,19 @@ def manage_mavros():
     # rc channel switch callbacks
     def rc_switch_a_callback(value):
         nonlocal rtl
-        rtl = True if value == 1 else False
+        rtl = True if value.data == 1 else False
         if (armed):
             send_flight_mode()
 
     def rc_switch_b_callback(value):
         nonlocal throttle_hold
-        throttle_hold = True if value == 1 else False
+        throttle_hold = True if value.data == 1 else False
         if (armed):
             send_flight_mode()
 
     def rc_switch_c_callback(value):
         nonlocal flight_mode
-        flight_mode = "LOITER" if value == 2 else ("ALT_HOLD" if value == 1 else "STABILIZE")
+        flight_mode = "LOITER" if value.data == 2 else ("ALT_HOLD" if value.data == 1 else "STABILIZE")
         if (armed):
             send_flight_mode()
 
@@ -201,14 +201,14 @@ def manage_mavros():
         pass
 
     # RC subscribers
-    rospy.Subscriber('comms/rc/roll', rc_roll_callback)
-    rospy.Subscriber('comms/rc/pitch', rc_pitch_callback)
-    rospy.Subscriber('comms/rc/throttle', rc_throttle_callback)
-    rospy.Subscriber('comms/rc/yaw', rc_yaw_callback)
-    rospy.Subscriber('comms/rc/switch_a', rc_switch_a_callback)
-    rospy.Subscriber('comms/rc/switch_b', rc_switch_b_callback)
-    rospy.Subscriber('comms/rc/switch_c', rc_switch_c_callback)
-    rospy.Subscriber('comms/rc/switch_d', rc_switch_d_callback)
+    rospy.Subscriber('comms/rc/roll', Float32, rc_roll_callback)
+    rospy.Subscriber('comms/rc/pitch', Float32, rc_pitch_callback)
+    rospy.Subscriber('comms/rc/throttle', Float32, rc_throttle_callback)
+    rospy.Subscriber('comms/rc/yaw', Float32, rc_yaw_callback)
+    rospy.Subscriber('comms/rc/switch_a', UInt8, rc_switch_a_callback)
+    rospy.Subscriber('comms/rc/switch_b', UInt8, rc_switch_b_callback)
+    rospy.Subscriber('comms/rc/switch_c', UInt8, rc_switch_c_callback)
+    rospy.Subscriber('comms/rc/switch_d', UInt8, rc_switch_d_callback)
 
     # listen to mavros state for arming
 
