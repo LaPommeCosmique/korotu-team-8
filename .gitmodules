@@ -1,9 +1,9 @@
 [submodule "Tl31-prod"]
 	path = Tl31-prod
 	url = git@github.com:emern/Tl31-prod.git
-[submodule "src/rplidar_ros"]
-	path = src/rplidar_ros
-	url = https://github.com/robopeak/rplidar_ros.git
-[submodule "src/hector_slam"]
-	path = src/hector_slam
+[submodule "hector_slam"]
+	path = hector_slam
 	url = https://github.com/tu-darmstadt-ros-pkg/hector_slam.git
+[submodule "rplidar_ros"]
+	path = rplidar_ros
+	url = https://github.com/robopeak/rplidar_ros.git
