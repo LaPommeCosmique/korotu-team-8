@@ -10,7 +10,7 @@ from mavros_msgs.srv import SetMode
 from geometry_msgs.msg import TwistStamped
 
 ###### NOTE: MAKE SURE YOU MAKE PYTHON FILE EXECUTABLE ------------------------------------------------------
-###### chmod +x mavros_manager_node.py ----------------------------------------------------------------------------
+###### chmod +x mavros_controller_node.py ----------------------------------------------------------------------------
 
 max_horizontal_velocity = 0.5
 max_vertical_velocity = 0.2
@@ -19,8 +19,8 @@ max_angular_velocity = 1
 def manage_mavros():
     
     # Initialize rospy
-    rospy.init_node('mavros_manager_node', anonymous=True)
-    print("Starting mavros manager")
+    rospy.init_node('mavros_controller_node', anonymous=True)
+    print("Starting mavros controller")
 
     # wait for services to become active
     rospy.wait_for_service('/mavros/cmd/arming')
@@ -75,7 +75,7 @@ def manage_mavros():
     
     def check_for_arming():
         nonlocal arm_trigger_time
-        if (armed is False):
+        if (armed == False):
             if (throttle < arm_trigger_threshold and yaw > (1 - arm_trigger_threshold)):
                 if (arm_trigger_time is None):
                     arm_trigger_time = time.time_ns()
@@ -89,7 +89,7 @@ def manage_mavros():
 
     def check_for_disarming():
         nonlocal disarm_trigger_time
-        if (armed is True):
+        if (armed == True):
             if (throttle < arm_trigger_threshold and yaw < arm_trigger_threshold):
                 if (disarm_trigger_time is None):
                     disarm_trigger_time = time.time_ns()
@@ -105,7 +105,7 @@ def manage_mavros():
     def send_flight_parameters():
         forward_velocity = (pitch * 2 - 1) * max_horizontal_velocity
         side_velocity = (roll * 2 - 1) * max_horizontal_velocity
-        if (throttle_hold is False):
+        if (throttle_hold == False):
             vertical_velocity = (throttle * 2 - 1) * max_vertical_velocity
         else:
             vertical_velocity = 0
@@ -128,13 +128,13 @@ def manage_mavros():
         vel_pub.publish(msg)
 
     def send_flight_mode():
-        if (rtl is True):
+        if (rtl == True):
             mode = "RTL"
             resp = set_mode_service(11, "RTL")
-        elif (flight_mode is "ALT_HOLD"):
+        elif (flight_mode == "ALT_HOLD"):
             mode = "ALT_HOLD"
             resp = set_mode_service(2, "ALT_HOLD")
-        elif (flight_mode is "LOITER"):
+        elif (flight_mode == "LOITER"):
             mode = "LOITER"
             resp = set_mode_service(5, "LOITER")
         else:
@@ -181,19 +181,19 @@ def manage_mavros():
     # rc channel switch callbacks
     def rc_switch_a_callback(value):
         nonlocal rtl
-        rtl = True if value is 1 else False
+        rtl = True if value == 1 else False
         if (armed):
             send_flight_mode()
 
     def rc_switch_b_callback(value):
         nonlocal throttle_hold
-        throttle_hold = True if value is 1 else False
+        throttle_hold = True if value == 1 else False
         if (armed):
             send_flight_mode()
 
     def rc_switch_c_callback(value):
         nonlocal flight_mode
-        flight_mode = "LOITER" if value is 2 else ("ALT_HOLD" if value is 1 else "STABILIZE")
+        flight_mode = "LOITER" if value == 2 else ("ALT_HOLD" if value == 1 else "STABILIZE")
         if (armed):
             send_flight_mode()
 
